@@ -1,7 +1,3 @@
-export function test() {
-	console.log('success')
-}
-
 export function singleKeyObjectToHTML(obj) {
 	const key = Object.keys(obj)[0];
 	if (key === "table") {

@@ -1,4 +1,4 @@
-import { Observable } from '../object-utils.js'
+import { Observable } from '../data-types/object-utils.js'
 import { max, clamp, modulo } from '../math/math-utils.js'
 
 export class FiniteAxis2D {

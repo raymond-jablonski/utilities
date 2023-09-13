@@ -1,4 +1,3 @@
-
 class Cache {
 	#length = undefined
 	#indices = new WeakMap()

@@ -1,14 +1,3 @@
-export function isObj(val, config = { includeNull: false, includeFunctions: false }) {
-	if (val === null && config.includeNull) {
-		return true
-	}
-	const type = typeof val;
-	if(type === 'function' && config.includeFunctions) {
-		return true
-	}
-	return type === 'object'
-}
-
 export function toObject(val, nullToEmpty = false) {
     switch (typeof val) {
         case "number":

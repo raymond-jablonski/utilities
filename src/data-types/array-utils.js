@@ -284,3 +284,47 @@ export function reverseArrInPlace(arr, startIndex = 0, endIndex = arr.length - 1
 		startIndex++
 	}
 }
+
+export function removeDuplicates(arr, equalityCheck = (a, b) => a === b) {
+	return arr.reduce((p, c, index, arr) => {
+		if (!p.some((item) => equalityCheck(item, c))) {
+			p.push(c);
+		}
+		return p;
+	}, []);
+}
+
+export function getDuplicates(arr, equalityCheck = (a, b) => a === b) {
+	const duplicates = []
+	const seen = new Set()
+	arr.forEach((current, index) => {
+		arr.slice(index + 1).filter(compare => equalityCheck(current, compare) && !seen.has(current))
+			.forEach(() => {
+				duplicates.push(current)
+				seen.add(current)
+			})
+	})
+	return duplicates
+}
+
+export function getWithMatchesRemoved(arr, match = (val, index) => val === null || val === undefined) {
+	return arr.filter((value, index) => !match(value, index))
+}
+
+export function filterAndMap(arr, ...mappers) {
+	return arr.reduce((prev, curr) => {
+		const result = mappers.find(mapper => mapper(curr))
+		if (result) {
+			prev.push(result(curr))
+		}
+		return prev;
+	}, []);
+}
+
+export function replaceArrValues(arrToPushInto, arrToPullFrom, valuesToReplaceTest = (ele) => ele === null || ele === undefined ? true : false) {
+	const arrToPullFromCopy = [...arrToPullFrom]
+	return [
+		arrToPushInto.map(val => (arrToPullFromCopy.length === 0 || !valuesToReplaceTest(val)) ? val : arrToPullFromCopy.shift()),
+		arrToPullFromCopy
+	]
+}

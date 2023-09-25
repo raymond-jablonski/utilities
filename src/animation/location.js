@@ -1,10 +1,13 @@
 import { Observable } from '../data-types/object-utils.js'
 import { max, clamp, modulo } from '../math/math-utils.js'
 
-export class FiniteAxis2D {
+export class Axis2D {
     #length
     #nextAxis
     #previousAxis
+	#looping
+	#infinite
+	#resizeBehavior 
 
     constructor(length = 0) {
         this.#length = length
@@ -26,7 +29,7 @@ export class Location2D {
     #axis
     #location
 
-    constructor(initialLocation = 0, axis = new FiniteAxis2D(), props = Location2D.defaultProps) {
+    constructor(initialLocation = 0, axis = new Axis2D(), props = Location2D.defaultProps) {
         this.#props = Object.assign(Location2D.defaultProps, props)
         this.#axis = axis
         this.#location = initialLocation

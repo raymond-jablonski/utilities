@@ -1,112 +1,110 @@
+export function create(length, eachItem = (index) => undefined) {
+	return Array.from({ length }, (index) => eachItem(index))
+}
+
 export function getLength(arr) {
-	return arr.length;
+	return arr.length
 }
 
 export function getSize(arr) {
-	return arr.length;
+	return getLength(arr)
 }
 
 export function eachIndex(arr, callback) {
-	for (let i = 0, len = arr.length; i < len; i++) {
-		callback(i)
+	for (let index in arr) {
+		callback(+index)
 	}
-	return arr;
 }
 
-export function eachValue(arr, callback) {
-	for (let val of arr) {
-		callback(val);
+export function eachItem(arr, callback) {
+	for (let item of arr) {
+		callback(item);
 	}
-	return arr;
 }
 
-export function eachIndexValue(arr, callback) {
-	arr.forEach(function (value, index) {
-		callback({ index, value });
-	});
+export function eachIndexItem(arr, callback) {
+	for (let index in arr) {
+		callback(+index, arr[index])
+	}
 }
 
 export function addItemToBeginning(arr, item) {
-	arr.unshift(item);
-	return arr;
+	arr.unshift(item)
+	return arr
 }
 
 export function addItemToEnd(arr, item) {
-	arr.push(item);
-	return arr;
+	arr.push(item)
+	return arr
 }
 
 export function removeLastItem(arr) {
-	arr.pop();
-	return arr;
+	arr.pop()
+	return arr
 }
 
 export function getFirstItem(arr) {
-	return arr[0];
+	return arr[0]
+}
+
+export function getLastItem(arr) {
+	return arr[arr.length - 1]
 }
 
 export function transformEach(arr, transform) {
-	return arr.map(function (item, index) {
-		return transform({item, index, arr: array})
-	});
+	return arr.map((item, index) => transform(item, index, arr))
 }
 
 export function sort(arr, sorter) {
-	return arr.sort(sorter);
+	return arr.sort(sorter)
 }
 
 export function reverse(arr) {
-	return arr.reverse();
+	return arr.reverse()
 }
 
 export function merge(...arrs) {
-	return [...arrs];
+	return [...arrs]
 }
 
 export function flatten(...arrs) {
-	let ans = [...arrs];
-	let i = 0;
-	while (i < ans.length) {
-		if (Array.isArray(ans[i])) {
-			ans.splice(i, 1, ...ans[i])
-		} else {
-			i++
+	return arrs.flat()
+}
+
+export function flattenRecursive(...arrs) {
+	return arrs.flat(Infinity)
+}
+
+export function hasItem(arr, item) {
+	return arr.includes(item)
+}
+
+export function firstIndexOfItem(arr, item) {
+	return arr.indexOf(item)
+}
+
+export function lastIndexOfItem(arr, item) {
+	return arr.lastIndexOf(item)
+}
+
+export function allIndexesOfItem(arr, item) {
+	return arr.reduce((prev, curr, index) => {
+		if (curr === item) {
+			prev.push(index)
 		}
-	}
-	return ans;
+		return prev
+	}, [])
 }
 
-export function hasValue(arr, val) {
-	return arr.includes(val)
+export function firstMatchingIndex(arr, itemFunction) {
+	return arr.findIndex(function (item) {
+		return itemFunction(item)
+	})
 }
 
-export function firstIndexOfValue(arr, val) {
-	return arr.indexOf(val)
-}
-
-export function lastIndexOfValue(arr, val) {
-	return arr.lastIndexOf(val)
-}
-
-export function allIndexesOfValue(arr, val) {
-	let ans = []
-	for (let i = 0, len = arr.length; i < len; i++) {
-		if (arr[i] === val) {
-			ans.push(i);
-		}
-	}
-	return ans
-}
-
-export function firstMatchingIndex(arr, valFunction) {
-	return arr.findIndex(function (val) {
-		return valFunction(val)
-	});
-}
-
-export function lastMatchingIndex(arr, valFunction) {
+export function lastMatchingIndex(arr, itemFunction) {
 	for (let i = arr.length - 1; i >= 0; i--) {
-		if (valFunction(arr[i])) {
+		if (itemFunction(arr[i])) {
 			return i
 		}
 	}
@@ -114,96 +112,110 @@ export function lastMatchingIndex(arr, valFunction) {
 }
 
 export function allMatchingIndexes(arr, matchFunction) {
-	let ans = []
-	for (let i = 0, len = arr.length; i < len; i++) {
-		if (matchFunction(arr[i])) {
-			ans.push(i);
+	return arr.reduce((prev, curr, index) => {
+		if (matchFunction(curr, index)) {
+			prev.push(index)
+		}
+		return prev
+	}, [])
+}
+
+export function firstMatchingItem(arr, matchFunction) {
+	return arr.find((item, index) => matchFunction(item, index))
+}
+
+export function lastMatchingItem(arr, matchFunction) {
+	for (let index = arr.length - 1; index >= 0; index--) {
+		const item = arr[i]
+		if (matchFunction(item, index)) {
+			return item
 		}
 	}
-	return ans
+	return undefined
 }
 
-export function firstMatchingValue(arr, matchFunction) {
-	return arr.find(function (val) {
-		return matchFunction(val)
-	});
-}
-
-export function lastMatchingValue(arr, matchFunction) {
-	for (let i = arr.length - 1; i >= 0; i--) {
-		if (matchFunction(arr[i])) {
-			return arr[i]
-		}
-	}
-	return -1
-}
-
-export function allMatchingValues(arr, matchFunction) {
-	return arr.filter(function (val) {
-		return matchFunction(val)
-	});
-}
-
-export function getLastItem(arr) {
-	return arr[arr.length - 1];
+export function allMatchingItems(arr, matchFunction) {
+	return arr.filter((item, index) => matchFunction(item, index))
 }
 
 export function removeFirstInstanceOfItem(arr, item) {
-	arr.shift(item);
-	return arr;
+	const index = firstIndexOfItem(arr, item)
+	if (index !== -1) {
+		return removeElementAt(arr, index)
+	}
+	return arr
+}
+
+export function removeLastInstanceOfItem(arr, item) {
+	const index = lastIndexOfItem(arr, item)
+	if (index !== -1) {
+		return removeElementAt(arr, index)
+	}
+	return arr
 }
 
 export function trim(arr, length) {
 	arr.splice(length)
-	return arr;
+	return arr
+}
+
+export function trimAfter(arr, index) {
+	arr.splice(index + 1)
+	return arr
+}
+
+export function trimBefore(arr, index) {
+	arr.splice(0, index)
+	return arr
 }
 
 export function removeElementAt(arr, index) {
 	arr.splice(index, 1)
-	return arr;
+	return arr
+}
+
+export function removeElementsFrom(arr, index, count) {
+	arr.splice(index, count)
+	return arr
 }
 
 export function insertBefore(arr, index, ...elements) {
 	arr.splice(index, 0, ...elements)
-	return arr;
+	return arr
 }
 
 export function insertAfter(arr, index, ...elements) {
 	arr.splice(index + 1, 0, ...elements)
-	return arr;
+	return arr
 }
 
 export function insertAndReplaceAt(arr, index, ...elements) {
 	arr.splice(index, 1, ...elements)
-	return arr;
+	return arr
 }
 
 export function isClean(arr) {
 	if (!Array.isArray(arr)) {
 		return false
 	}
-	let count = 0
 	for (let key in arr) {
-		if (key != count) {
+		if (key != +key || key < 0) {
 			return false
 		}
-		count++;
 	}
+	return true
 }
 
 export function clean(arr) {
 	if (Array.isArray(arr)) {
-		let count = 0
 		for (let key in arr) {
-			if (key != count) {
-				arr[count] = arr[key]
+			if (key != +key || key < 0) {
 				delete arr[key]
 			}
-			count++;
 		}
-		arr.splice(count)
-	} else if (typeof (arr) === "object") { // won't work
-		return Object.values(arr)
+		return arr
+	} else if (typeof arr === "object") {
+		return Object.entries(arr).reduce((prev, [key, value]) => { if (key == +key && key >= 0) { prev[key] = value } return prev }, [])
 	} else {
 		arr = [arr]
 	}
@@ -211,24 +223,19 @@ export function clean(arr) {
 }
 
 export function delimitedStringToArray(arr, delimiter) {
-	return arr.split(delimiter);
+	return arr.split(delimiter)
 }
 
 export function clone(arr) {
-	return Array.from(arr);
-	// return arr.slice();
+	return [...arr]
 }
 
-export function compute(arr, startValue, computeFunction) {
-	let length = arr.length
-	let lastIndex = length - 1
-	return arr.reduce(function (previousValue, value, index) {
-		computeFunction(previousValue, value, index, lastIndex, length)
-	}, startValue)
-}
-
-export function sumAll(arr) {
-	return (([start, end]) => Array.from({ length: 1 + end - start }, (x, i) => i + start).reduce((p, c) => p + c))(arr.sort((a, b) => a - b))
+export function compute(arr, computeFunction, answer = 0) {
+	const length = arr.length
+	const lastIndex = length - 1
+	return arr.reduce(function (answer, item, index) {
+		computeFunction({ answer, item, index, lastIndex, length })
+	}, answer)
 }
 
 export function chunk(arr, chunkSize) {
@@ -240,39 +247,80 @@ export function chunk(arr, chunkSize) {
 	return [...cGen(arr, chunkSize)]
 }
 
-export function chunkAt(arr, chunkCheck) {
-	let ans = [],
-		lastChunk = 0
-	for (let key in arr) {
-		if (chunkCheck(arr[key])) {
-			ans.push(arr.slice(lastChunk, key))
-			lastChunk = key
+export function chunkAfter(arr, chunkCheck) {
+	function* cGen(arr, chunkCheck) {
+		let chunk = []
+		for (let index in arr) {
+			const item = arr[index]
+			chunk.push(item)
+			if (chunkCheck(item, index)) {
+				yield chunk
+				chunk = []
+			}
+		}
+		if (chunk.length) {
+			yield chunk
 		}
 	}
-	ans.push(arr.slice(lastChunk))
-	return ans
+	return [...cGen(arr, chunkCheck)]
 }
 
-export function forEachAdjacentGroup(arr, groupSize, handler) {
-	groupSize = Math.min(groupSize, arr.length)
-	let lastIndex = arr.length - groupSize
-	for (let i = 0; i <= lastIndex; i++) {
-		handler(arr.slice(i, i + groupSize).reduce((p, c, offset) => { p.push({ index: i + offset, item: c }); return p }, []))
-	}
-}
-
-export function forEachUnorderedGroup(arr, groupSize, handler) {
-	function iterate(indices, offset) {
-		if (indices.length === groupSize) {
-			handler(indices.reduce((p, c) => { p.push({ index: c, item: arr[c] }); return p }, []))
-		} else {
-			let lastIndex = arr.length - (groupSize - indices.length)
-			for (let i = indices.length + offset; i <= lastIndex; i++) {
-				iterate([...indices, i], i)
+export function forEachAdjacentSet(arr, setSize, callback) {
+	function* cGen(arr, setSize) {
+		for (let i = 0; i < arr.length; i++) {
+			const set = arr.slice(i, i + setSize)
+			if (set.length === setSize) {
+				yield set
 			}
 		}
 	}
-	iterate([], 0)
+	for (let set of cGen(arr, setSize)) {
+		callback(set)
+	}
+}
+
+export function forEachToArray(forEachFunction, ...args) {
+	const arr = []
+	forEachFunction(...args, (ans) => arr.push(ans))
+	return arr
+}
+
+export function swap(arr, index1, index2) {
+	const temp = arr[index1]
+	arr[index1] = arr[index2]
+	arr[index2] = temp
+}
+
+export function forEachSet(arr, setSize, callback) {
+	function generateCombinations(arr, setSize, index = 0, currentSet = []) {
+		if (currentSet.length === setSize) {
+			callback(currentSet.slice())
+			return
+		}
+		if (index >= arr.length) {
+			return
+		}
+		currentSet.push(arr[index])
+		generateCombinations(arr, setSize, index + 1, currentSet)
+		currentSet.pop()
+		generateCombinations(arr, setSize, index + 1, currentSet)
+	}
+	generateCombinations(arr, setSize)
+}
+
+export function forEachPermutation(arr, callback) {
+	function generatePermutations(arr, index = 0) {
+		if (index >= arr.length - 1) {
+			callback(arr.slice())
+			return
+		}
+		for (let i = index; i < arr.length; i++) {
+			swap(arr, index, i)
+			generatePermutations(arr, index + 1)
+			swap(arr, index, i)
+		}
+	}
+	generatePermutations(arr)
 }
 
 export function reverseArrInPlace(arr, startIndex = 0, endIndex = arr.length - 1) {
@@ -288,43 +336,83 @@ export function reverseArrInPlace(arr, startIndex = 0, endIndex = arr.length - 1
 export function removeDuplicates(arr, equalityCheck = (a, b) => a === b) {
 	return arr.reduce((p, c, index, arr) => {
 		if (!p.some((item) => equalityCheck(item, c))) {
-			p.push(c);
+			p.push(c)
 		}
-		return p;
-	}, []);
+		return p
+	}, [])
 }
 
-export function getDuplicates(arr, equalityCheck = (a, b) => a === b) {
-	const duplicates = []
-	const seen = new Set()
-	arr.forEach((current, index) => {
-		arr.slice(index + 1).filter(compare => equalityCheck(current, compare) && !seen.has(current))
-			.forEach(() => {
-				duplicates.push(current)
-				seen.add(current)
-			})
-	})
-	return duplicates
-}
-
-export function getWithMatchesRemoved(arr, match = (val, index) => val === null || val === undefined) {
-	return arr.filter((value, index) => !match(value, index))
-}
-
-export function filterAndMap(arr, ...mappers) {
-	return arr.reduce((prev, curr) => {
-		const result = mappers.find(mapper => mapper(curr))
-		if (result) {
-			prev.push(result(curr))
+export function forEachDuplicate(arr, callback, equalityCheck = (a, b) => a === b) {
+	const unique = []
+	for (let index in arr) {
+		const item = arr[index]
+		if (unique.some((uniqueItem) => equalityCheck(uniqueItem, item))) {
+			callback(item, +index, arr)
 		}
-		return prev;
-	}, []);
+		unique.push(item)
+	}
 }
 
-export function replaceArrValues(arrToPushInto, arrToPullFrom, valuesToReplaceTest = (ele) => ele === null || ele === undefined ? true : false) {
-	const arrToPullFromCopy = [...arrToPullFrom]
-	return [
-		arrToPushInto.map(val => (arrToPullFromCopy.length === 0 || !valuesToReplaceTest(val)) ? val : arrToPullFromCopy.shift()),
-		arrToPullFromCopy
-	]
+export function getWithMatchesRemoved(arr, match = (item, index) => item === null || item === undefined) {
+	return arr.filter((item, index) => !match(item, index))
+}
+
+export function forEachInReverse(arr, callback) {
+	for (let i = arr.length - 1; i >= 0; i--) {
+		callback(arr[i], i)
+	}
+}
+
+export function forEachChunk(arr, chunkSize, callback) {
+	for (let i = 0; i < arr.length; i += chunkSize) {
+		const chunk = arr.slice(i, i + chunkSize)
+		callback(chunk, i, i + chunk.length - 1)
+	}
+}
+
+export function forEachChunkReversed(arr, chunkSize, callback) {
+	for (let i = arr.length - 1; i >= 0; i -= chunkSize) {
+		const chunk = arr.slice(Math.max(0, i - chunkSize + 1), i + 1)
+		callback(chunk, i - chunk.length + 1, i)
+	}
+}
+
+export function forEachSlide(arr, slideSize, callback) {
+	for (let i = 0; i < arr.length - slideSize + 1; i++) {
+		const slide = arr.slice(i, i + slideSize)
+		callback(slide, i, i + slide.length - 1)
+	}
+}
+
+export function forEachSlideReversed(arr, slideSize, callback) {
+	for (let i = arr.length - 1; i >= slideSize - 1; i--) {
+		const slide = arr.slice(i - slideSize + 1, i + 1)
+		callback(slide, i - slide.length + 1, i)
+	}
+}
+
+export function transpose(arr, transposeArr, startIndex = 0, transposeOverUndefinedItems = true) {
+	for (let index in transposeArr) {
+		if (arr[+index + startIndex] !== undefined || transposeOverUndefinedItems) {
+			arr[+index + startIndex] = transposeArr[index]
+		}
+	}
+	return arr
+}
+
+export function resize(arr, length, fill = (index) => undefined) {
+	const oldLength = arr.length
+	arr.length = length
+	for (let index = oldLength; index < length; index++) {
+		arr[index] = fill(index)
+	}
+	return arr
+}
+
+export function sequentialReplace(arr, replacementItems, itemsToReplace = (item, index) => item === null || item === undefined) {
+	return arr.map((ele) => itemsToReplace(ele) ? replacementItems.shift() : ele)
+}
+
+export function transposeMatchingSequentially(arr, replacementItems, matcher = (item, index) => item === null || item === undefined) {
+	return arr.map((ele) => matcher(ele) ? replacementItems.shift() : ele).concat(replacementItems)
 }

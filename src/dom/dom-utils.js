@@ -1,3 +1,5 @@
+import * as array2dUtils from '../data-types/array2d-utils.js'
+
 export function getHTMLElement(document) {
 	return document.documentElement
 }
@@ -8,17 +10,17 @@ export function getHeadElement(document) {
 	return document.head
 }
 
-export function forEachChild(element, callback, { elementsOnly, directDescendantsOnly, filter } = { elementsOnly: false, directDescendantsOnly: false, filter: node => true }) {
-	function forEachChildWithDepth(element, callback, { elementsOnly, directDescendantsOnly, filter }, depth = 0) {
-		element = elementsOnly ? element.firstElementChild : element.firstChild
-		while (element) {
-			if (filter(element)) {
-				callback(element, depth)
+export function forEachChild(element, callback, { elementsOnly, directDescendantsOnly, filter } = { elementsOnly: false, directDescendantsOnly: false, filter: (node, depth) => true }) {
+	function forEachChildWithDepth(node, callback, { elementsOnly, directDescendantsOnly, filter }, depth = 0) {
+		node = elementsOnly ? node.firstElementChild : node.firstChild
+		while (node) {
+			if (filter(node, depth)) {
+				callback(node, depth)
 			}
 			if (directDescendantsOnly) {
-				forEachChildWithDepth(element, callback, { elementsOnly, directDescendantsOnly, filter }, depth + 1)
+				forEachChildWithDepth(node, callback, { elementsOnly, directDescendantsOnly, filter }, depth + 1)
 			}
-			element = elementsOnly ? element.nextElementSibling : element.nextSibling
+			node = elementsOnly ? node.nextElementSibling : node.nextSibling
 		}
 	}
 	forEachChildWithDepth(element, callback, { elementsOnly, directDescendantsOnly, filter })
@@ -51,19 +53,18 @@ export function tableToJSON(table, expandExtendedCells = false) {
 		return Sections.map(section => {
 			let filledArr = []
 			for (let rowIndex in section.rows) {
-				for (let cellIndex in section.rows[rowIndex]) {
-					const cell = row[cellIndex]
+				let columnIndex = 0
+				for (let unexpandedColumnIndex in section.rows[rowIndex]) {
+					const cell = row[unexpandedColumnIndex]
 					const ColSpan = +(cell.getAttribute("colspan")) || 1
 					const RowSpan = +(cell.getAttribute("rowspan")) || 1
-					const currentCol = column
-					fill2DArr(filledArr, { row, currentCol, ColSpan, RowSpan }, cell, true)
+					array2dUtils.transpose(filledArr, array2dUtils.createMatrix(RowSpan, ColSpan, () => cell), +rowIndex, +columnIndex, true)
 				}
 			}
 			filledArr.length = section.rows.length
 			return { ...section, rows: filledArr }
 		})
 	}
-
 	return Sections
 }
 
@@ -135,9 +136,7 @@ export function setElementHiddenTag(element, hidden = true) {
 	}
 }
 
-
-
-export function insertText(element, text, asHTML = false) {
+export function setText(element, text, asHTML = false) {
 	if (asHTML) {
 		element.innerHTML = text
 	} else {
@@ -172,6 +171,34 @@ export function removeNode(node, reparentChildren = false) {
 		}
 	}
 	node.remove()
+}
+
+export function removeMatchingChildren(element, match, { directDescendantsOnly = false, reparentChildren = true } = {}) {
+	const children = [...element.children]
+	for (let child of children) {
+		if (match(child)) {
+			removeNode(child, reparentChildren)
+		} else if (!directDescendantsOnly) {
+			removeMatchingChildren(child, match, { directDescendantsOnly, reparentChildren })
+		}
+	}
+}
+
+export function stripAttributes(element, recursive = true) {
+	if (element.nodeType === Node.ELEMENT_NODE) {
+		const attributes = element.attributes;
+		for (let attribute of attributes) {
+			element.removeAttribute(attribute.name);
+		}
+
+		if (recursive) {
+			const childNodes = element.childNodes;
+			for (let childNode of childNodes) {
+				stripAttributes(childNode);
+			}
+		}
+	}
+	return element;
 }
 
 export function cloneNode(node, deep = false) {
@@ -228,7 +255,7 @@ export function insertTextAfter(text, nodeToInsertAfter) {
 }
 
 export function wrapElement(element, wrapper) {
-	if(element.parentElement) {
+	if (element.parentElement) {
 		insertNodeBefore(wrapper, element)
 	}
 	insertAsLastChild(element, wrapper)
@@ -346,7 +373,7 @@ export function getDimensions(element) {
 export function scrollIntoView(element, top = false) {
 	element.scrollIntoView(top)
 }
-export function scrollTo(element, { top, left } = {top: element.scrollTop, left: element.scrollLeft}}) {
+export function scrollTo(element, { top, left } = { top: element.scrollTop, left: element.scrollLeft }) {
 	element.scrollTo(top, left)
 }
 
@@ -401,32 +428,6 @@ export function arraysToObjects(keys, ...valueArrays) {
 	return objectArray
 }
 
-export function removeDuplicates(arr, equalityCheck = (a, b) => a === b) {
-	return arr.reduce((p, c, index, arr) => {
-		if (!p.some((item) => equalityCheck(item, c))) {
-			p.push(c);
-		}
-		return p;
-	}, []);
-}
-
-export function getDuplicates(arr, equalityCheck = (a, b) => a === b) {
-	const duplicates = []
-	const seen = new Set()
-	arr.forEach((current, index) => {
-		arr.slice(index + 1).filter(compare => equalityCheck(current, compare) && !seen.has(current))
-			.forEach(() => {
-				duplicates.push(current)
-				seen.add(current)
-			})
-	})
-	return duplicates
-}
-
-export function getWithMatchesRemoved(arr, match = (val, index) => val === null || val === undefined) {
-	return arr.filter((value, index) => !match(value, index))
-}
-
 export function mapXPath(XPath, mapper, parentNode = document) {
 	const Result = document.evaluate(XPath, parentNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE)
 	let ans = []
@@ -435,8 +436,6 @@ export function mapXPath(XPath, mapper, parentNode = document) {
 	}
 	return ans
 }
-
-
 
 export function allDescendantsFlattened(element) {
 	const descendants = []
@@ -515,34 +514,6 @@ export function replaceArrValues(arrToPushInto, arrToPullFrom, valuesToReplaceTe
 	]
 }
 
-
-
-export function fill2DArr(arr, { row, column, width, height }, fillValue, fillUndefined = false) {
-	if (fillUndefined) {
-		for (let rowIndex = row; rowIndex < row + height; rowIndex++) {
-			if (!arr[rowIndex]) {
-				arr[rowIndex] = new Array(column + width);
-			} else {
-				arr[rowIndex].length = Math.max(arr[rowIndex].length, column + width);
-			}
-		}
-	}
-	arr.slice(row, row + height).forEach((rowArr) => rowArr.fill(fillValue, column, column + width));
-	return arr;
-}
-
-
-export function arrToMatrix(arr, fillValue) {
-	const maxRowLength = Math.max(...arr.map(row => row.length));
-	return arr.map(row => {
-		const newRow = [...row];
-		while (newRow.length < maxRowLength) {
-			newRow.push(fillValue);
-		}
-		return newRow;
-	})
-}
-
 export function findNextElement(selector, element) {
 	const nextSibling = element.nextElementSibling
 	if (!nextSibling) {
@@ -565,85 +536,3 @@ export function getAllFromXPath(XPathExpression, elementContext = document) {
 	}
 	return allMatches
 }
-
-
-
-
-// function that takes an element, gets its height and width, then turns it into a block-level element with a fixed height and width and a horizontal-only scroll
-// then takes each child element, gets its height and width, then turns it into a block-level element with a fixed height and width 
-// The child elements are stacked from top to bottom in a column, and if the bottom of the column is reached, a new column is created and the remaining children are added to that column
-
-let observer = new IntersectionObserver(entries => {
-	entries.forEach((entry) => {
-		unflowChildren(entry.target)
-		flowChildren(entry.target)
-	})
-}, {});
-
-
-function unflowChildren(ele) {
-	ele.style.height = ''
-	ele.style.width = ''
-	ele.style.overflow = ''
-	ele.style.whiteSpace = ''
-	for (let column of ele.children) {
-		for (let child of column.children) {
-			child.style.display = ''
-			child.style.height = ''
-			child.style.width = ''
-			ele.appendChild(child)
-		}
-		ele.removeChild(column)
-	}
-}
-
-function flowChildren(ele) {
-	preventViewOverflow(ele.parentElement)
-	function preventViewOverflow(ele) {
-		ele.style.height = `${(document.documentElement.clientHeight - ele.getBoundingClientRect().top)}px`
-		ele.style.width = `${(document.documentElement.clientWidth - ele.getBoundingClientRect().left)}px`
-	}
-	function createColumn() {
-		const column = document.createElement('div')
-		column.style.display = 'inline-block'
-		column.style.overflow = 'hidden'
-		column.style.height = '100%'
-		ele.appendChild(column)
-		return column
-	}
-	function addChildToColumn(column, child) {
-		column.appendChild(child)
-	}
-	function freezeDimensions(ele) {
-		const { height, width } = { height: ele.offsetHeight, width: ele.offsetWidth }
-		ele.style.height = `${height}px`
-		ele.style.width = `${width}px`
-	}
-	ele.style.height = `100%`
-	ele.style.width = `100%`
-	freezeDimensions(ele)
-	ele.style.overflow = 'auto hidden'
-	ele.style.whiteSpace = 'nowrap'
-
-	for (let child of ele.children) {
-		child.style.display = 'block'
-		freezeDimensions(child)
-	}
-	const { height, width } = { height: ele.offsetHeight, width: ele.offsetWidth }
-
-	const children = [...ele.children]
-	let currentColumn = createColumn()
-	let currentHeight = 0
-	children.forEach(child => {
-		if (currentHeight + child.offsetHeight > height) {
-			currentColumn = createColumn()
-			currentHeight = 0
-			addChildToColumn(currentColumn, child)
-		} else {
-			addChildToColumn(currentColumn, child)
-		}
-		currentHeight += child.offsetHeight
-	})
-}
-
-

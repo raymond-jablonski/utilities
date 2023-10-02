@@ -1,5 +1,3 @@
-import * as array2dUtils from '../data-types/array2d-utils.js'
-
 export function getHTMLElement(document) {
 	return document.documentElement
 }
@@ -45,27 +43,57 @@ export function forEachSiblng(element, callback, { filter, elementsOnly } = { fi
 	}
 }
 
-export function tableToJSON(table, expandExtendedCells = false) {
-	const Sections = [...table.children]
-		.filter(node => node.nodeName === 'TBODY' || node.nodeName === 'THEAD' || node.nodeName === 'TFOOT')
-		.map(section => ({ type: section.nodeName, rows: [...section.children].map(row => [...row.children]) }))
-	if (expandExtendedCells) {
-		return Sections.map(section => {
-			let filledArr = []
-			for (let rowIndex in section.rows) {
-				let columnIndex = 0
-				for (let unexpandedColumnIndex in section.rows[rowIndex]) {
-					const cell = row[unexpandedColumnIndex]
-					const ColSpan = +(cell.getAttribute("colspan")) || 1
-					const RowSpan = +(cell.getAttribute("rowspan")) || 1
-					array2dUtils.transpose(filledArr, array2dUtils.createMatrix(RowSpan, ColSpan, () => cell), +rowIndex, +columnIndex, true)
+export function tableToJSON(table, expandCellSpans = false) {
+	const getCellAttributes = (cell) => ({
+		colSpan: +(cell.getAttribute("colspan")) || 1,
+		rowSpan: +(cell.getAttribute("rowspan")) || 1,
+		content: cell,
+	})
+
+	const createSectionObject = (section) => ({
+		type: section.nodeName,
+		rows: [...section.children].map((row) =>
+			[...row.children].map((cell) => getCellAttributes(cell))
+		),
+	})
+
+	const fillIfUndefined = (arr, fillValue, startRowIndex, startColumnIndex, height, width) => {
+		const stopRow = Math.min(startRowIndex + height, arr.length)
+		const stopColumn = startColumnIndex + width
+
+		for (let rowIndex = startRowIndex; rowIndex < stopRow; rowIndex++) {
+			for (let columnIndex = startColumnIndex; columnIndex < stopColumn; columnIndex++) {
+				if (!arr[rowIndex][columnIndex]) {
+					arr[rowIndex][columnIndex] = fillValue
 				}
 			}
-			filledArr.length = section.rows.length
-			return { ...section, rows: filledArr }
-		})
+		}
+		return arr
 	}
-	return Sections
+
+	const sections = [...table.children].filter(
+		(node) => node.nodeName === 'TBODY' || node.nodeName === 'THEAD' || node.nodeName === 'TFOOT'
+	)
+
+	if (expandCellSpans) {
+		const sectionsWithExpandedCells = sections.map((section) => {
+			let rows = Array.from({ length: section.children.length }, () => []);
+			for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+				let columnIndex = 0
+				for (let cell of [...section.children[rowIndex].children]) {
+					columnIndex = rows[rowIndex].findIndex((item) => !item)
+					if (columnIndex === -1) {
+						columnIndex = rows[rowIndex].length
+					}
+					const { colSpan, rowSpan, content } = getCellAttributes(cell)
+					rows = fillIfUndefined(rows, content, rowIndex, columnIndex, rowSpan, colSpan)
+				}
+			}
+			return { ...createSectionObject(section), rows }
+		})
+		return sectionsWithExpandedCells
+	}
+	return sections.map((section) => createSectionObject(section))
 }
 
 export function elementMatchesCSS(element, selector) {
@@ -524,7 +552,6 @@ export function findNextElement(selector, element) {
 	}
 	return findNextElement(selector, nextSibling)
 }
-
 
 export function getAllFromXPath(XPathExpression, elementContext = document) {
 	const XIterator = document.evaluate(XPathExpression, elementContext);

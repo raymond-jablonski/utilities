@@ -1,5 +1,3 @@
-import * as arrayUtils from './array-utils.js';
-
 export function createMatrix(rows = 1, columns = 1, eachValue = (rowIndex, columnIndex) => undefined) {
 	return Array(rows).fill().map((_, rowIndex) => Array(columns).fill().map((_, columnIndex) => eachValue(rowIndex, columnIndex)))
 }
@@ -15,6 +13,39 @@ export function forEachColumn(arr, callback) {
 	for (let columnIndex = 0; columnIndex < maxLen; columnIndex++) {
 		callback(arr.map(row => row[columnIndex]), columnIndex)
 	}
+}
+
+export function mapEachRow(arr, callback) {
+	return arr.map((row, rowIndex) => callback(row, rowIndex))
+}
+
+export function transpose(arr) {
+	const maxLen = arr.reduce((max, row) => Math.max(max, row.length), 0)
+	return Array.from({ length: maxLen }, (_, columnIndex) => arr.map(row => row[columnIndex]))
+}
+
+export function mapEachColumn(arr, callback) {
+	return transpose(transpose(arr).map((column, columnIndex) => callback(column, columnIndex)))
+}
+
+export function flipHorizontal(arr) {
+	return arr.map(row => row.slice().reverse())
+}
+
+export function flipVertical(arr) {
+	return arr.slice().reverse()
+}
+
+export function rotateClockwise90(arr) {
+	return transpose(flipVertical(arr))
+}
+
+export function rotateCounterClockwise90(arr) {
+	return flipHorizontal(transpose(arr))
+}
+
+export function rotate180(arr) {
+	return flipVertical(flipHorizontal(arr))
 }
 
 export function toMatrix(arr, fill = (rowIndex, columnIndex) => undefined) {
@@ -34,10 +65,21 @@ export function getSlice(arr, { rowIndex, columnIndex, width, height }) {
 	return arr.slice(rowIndex, rowIndex + height).map(row => row.slice(columnIndex, columnIndex + width))
 }
 
-// returns a new array with the transpose array overriding the values of the original array starting at the specified row and column.
-// If transposeOverUndefined is false, then undefined values in the original array are transposed, and the original array is expanded if needed
-// transpose([[1, 2, 3], [4, 5, 6], [7, 8, 9]], [['a', 'b'], ['a1', 'b1']], 3, 3, true) returns [[1, 2, 3, undefined, undefined], [4, 5, 6, undefined, undefined], [7, 8, 9, undefined, undefined], [undefined, undefined, undefined, 'a', 'b'], [undefined, undefined, undefined, 'a1', 'b1']]
-export function transpose(arr, arrToTranspose, rowIndex = 0, columnIndex = 0, transposeOverUndefined = true) {
-	const numRows = transposeOverUndefined ? Math.max(arr.length, rowIndex + arrToTranspose.length) : arr.length
-	return arrayUtils.resize(arr, numRows, () => []).map((row, currRowIndex) => arrayUtils.transpose(row, arrToTranspose[currRowIndex - rowIndex] || [], columnIndex, transposeOverUndefined))
+export function superimpose(baseArr, overlayArr, startRowIndex = 0, startColIndex = 0, expandIfNeeded = true) {
+    overlayArr.forEach((row, rowIndex) => {
+        const targetRowIndex = startRowIndex + rowIndex
+        if (!baseArr[targetRowIndex] && expandIfNeeded) {
+            baseArr[targetRowIndex] = []
+        }
+        if (baseArr[targetRowIndex]) {
+            row.forEach((cell, colIndex) => {
+                const targetColIndex = startColIndex + colIndex
+                
+                if (expandIfNeeded || targetColIndex < baseArr[targetRowIndex].length) {
+                    baseArr[targetRowIndex][targetColIndex] = cell
+                }
+            })
+        }
+    })
+    return baseArr
 }

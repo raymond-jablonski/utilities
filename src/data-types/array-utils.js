@@ -56,7 +56,7 @@ export function transformEach(arr, transform) {
 }
 
 export function sort(arr, sorter) {
-	return arr.sort(sorter)
+	return arr.sort((a, b) => sorter(a, b) ? -1 : 1)
 }
 
 export function reverse(arr) {
@@ -79,79 +79,78 @@ export function hasItem(arr, item) {
 	return arr.includes(item)
 }
 
-export function firstIndexOfItem(arr, item) {
-	return arr.indexOf(item)
+export function hasMatchingItem(arr, matchFunction) {
+	return arr.some((item, index) => matchFunction(item, index))
 }
 
-export function lastIndexOfItem(arr, item) {
-	return arr.lastIndexOf(item)
+export function findFirstIndexOfItem(arr, item, { notFoundReturnValue = -1, startIndex = 0 } = {}) {
+	const index = arr.indexOf(item, startIndex)
+	if (index === -1) {
+		return notFoundReturnValue
+	}
+	return index
 }
 
-export function allIndexesOfItem(arr, item) {
-	return arr.reduce((prev, curr, index) => {
-		if (curr === item) {
-			prev.push(index)
-		}
-		return prev
-	}, [])
+export function findLastIndexOfItem(arr, item, { notFoundReturnValue = -1, startIndexOffset = 0 } = {}) {
+	const index = arr.lastIndexOf(item, arr.length - 1 - startIndexOffset)
+	if (index === -1) {
+		return notFoundReturnValue
+	}
+	return index
 }
 
-export function firstMatchingIndex(arr, itemFunction) {
-	return arr.findIndex(function (item) {
-		return itemFunction(item)
-	})
-}
-
-export function lastMatchingIndex(arr, itemFunction) {
-	for (let i = arr.length - 1; i >= 0; i--) {
-		if (itemFunction(arr[i])) {
-			return i
+export function eachIndexOfItem(arr, item, callback) {
+	for (let index in arr) {
+		if (arr[index] === item) {
+			callback(+index)
 		}
 	}
-	return -1
 }
 
-export function allMatchingIndexes(arr, matchFunction) {
-	return arr.reduce((prev, curr, index) => {
-		if (matchFunction(curr, index)) {
-			prev.push(index)
+export function removeFirstInstanceOfItem(arr, item, startIndex = 0) {
+	const index = findFirstIndexOfItem(arr, item, { startIndex })
+	if (index !== -1) {
+		return removeItemAt(arr, index)
+	}
+	return arr
+}
+
+export function removeLastInstanceOfItem(arr, item, startIndexOffset = 0) {
+	const index = findLastIndexOfItem(arr, item, { startIndexOffset })
+	if (index !== -1) {
+		return removeItemAt(arr, index)
+	}
+	return arr
+}
+
+export function firstMatchingIndex(arr, matchFunction, { notFoundReturnValue = -1, startIndex = 0 } = {}) {
+	for (let index = startIndex; index < arr.length; index++) {
+		if (matchFunction(arr[index], index)) {
+			return index
 		}
-		return prev
-	}, [])
+	}
+	return notFoundReturnValue
+}
+
+export function lastMatchingIndex(arr, matchFunction, { notFoundReturnValue = -1, startIndexOffset = 0 } = {}) {
+	for (let index = arr.length - 1 - startIndexOffset; index >= 0; index--) {
+		if (matchFunction(arr[index], index)) {
+			return index
+		}
+	}
+	return notFoundReturnValue
+}
+
+export function eachMatchingIndex(arr, matchFunction, callback) {
+	for (let index in arr) {
+		if (matchFunction(arr[index], index)) {
+			callback(+index)
+		}
+	}
 }
 
 export function firstMatchingItem(arr, matchFunction) {
 	return arr.find((item, index) => matchFunction(item, index))
-}
-
-export function lastMatchingItem(arr, matchFunction) {
-	for (let index = arr.length - 1; index >= 0; index--) {
-		const item = arr[i]
-		if (matchFunction(item, index)) {
-			return item
-		}
-	}
-	return undefined
-}
-
-export function allMatchingItems(arr, matchFunction) {
-	return arr.filter((item, index) => matchFunction(item, index))
-}
-
-export function removeFirstInstanceOfItem(arr, item) {
-	const index = firstIndexOfItem(arr, item)
-	if (index !== -1) {
-		return removeElementAt(arr, index)
-	}
-	return arr
-}
-
-export function removeLastInstanceOfItem(arr, item) {
-	const index = lastIndexOfItem(arr, item)
-	if (index !== -1) {
-		return removeElementAt(arr, index)
-	}
-	return arr
 }
 
 export function trim(arr, length) {
@@ -169,28 +168,28 @@ export function trimBefore(arr, index) {
 	return arr
 }
 
-export function removeElementAt(arr, index) {
+export function removeItemAt(arr, index) {
 	arr.splice(index, 1)
 	return arr
 }
 
-export function removeElementsFrom(arr, index, count) {
+export function removeItems(arr, index, count) {
 	arr.splice(index, count)
 	return arr
 }
 
-export function insertBefore(arr, index, ...elements) {
-	arr.splice(index, 0, ...elements)
+export function insertBefore(arr, index, ...items) {
+	arr.splice(index, 0, ...items)
 	return arr
 }
 
-export function insertAfter(arr, index, ...elements) {
-	arr.splice(index + 1, 0, ...elements)
+export function insertAfter(arr, index, ...items) {
+	arr.splice(index + 1, 0, ...items)
 	return arr
 }
 
-export function insertAndReplaceAt(arr, index, ...elements) {
-	arr.splice(index, 1, ...elements)
+export function replace(arr, index, ...replacementItems) {
+	arr.splice(index, 1, ...replacementItems)
 	return arr
 }
 
@@ -391,11 +390,12 @@ export function forEachSlideReversed(arr, slideSize, callback) {
 	}
 }
 
-export function transpose(arr, transposeArr, startIndex = 0, transposeOverUndefinedItems = true) {
-	for (let index in transposeArr) {
-		if (arr[+index + startIndex] !== undefined || transposeOverUndefinedItems) {
-			arr[+index + startIndex] = transposeArr[index]
-		}
+export function superimpose(arr, imposerArr, startIndex = 0, expandIfNeeded = true) {
+	if (expandIfNeeded) {
+		arr.length = Math.max(arr.length, imposerArr.length + startIndex)
+	}
+	for (let index in imposerArr) {
+		arr[+index + startIndex] = imposerArr[index]
 	}
 	return arr
 }

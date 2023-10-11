@@ -149,6 +149,15 @@ export function forEachMatchingChild(element, matcher, callback, { directDescend
 	forEachChild(element, (child, depth) => { if (elementMatches(child, matcher)) { callback(child, depth) } }, { directDescendantsOnly, elementsOnly })
 }
 
+export function createElementFromString(elementString) {
+	const parser = new DOMParser()
+	const doc = parser.parseFromString(elementString, 'text/html')
+	return doc.body.firstChild
+}
+export function forEachSelectedElement(selector, callback, root = document) {
+	root.querySelectorAll(selector).forEach(element => callback(element))
+}
+
 export function isElement(element) {
 	return element instanceof Element
 }
@@ -180,26 +189,64 @@ export function insertNodeAsLastChild(nodeToInsert, parent) {
 	parent.appendChild(nodeToInsert)
 }
 
-export function insertNodeBefore(nodeToInsert, nodeToInsertBefore) {
-	nodeToInsertBefore.before(nodeToInsert)
+export function insertNodeBefore(node, nodeToInsertBefore) {
+	nodeToInsertBefore.before(node)
 }
 
-export function insertNodeAfter(nodeToInsert, nodeToInsertAfter) {
-	nodeToInsertAfter.after(nodeToInsert)
+export function insertNodeAfter(node, nodeToInsertAfter) {
+	nodeToInsertAfter.after(node)
 }
 
-export function replaceNode(nodeToInsert, nodeToReplace) {
-	nodeToReplace.replaceWith(nodeToInsert)
+export function replaceNode(node, replacementNode, reparentChildren = false) {
+	if (reparentChildren) {
+		transferChildren(node, replacementNode)
+	}
+	node.replaceWith(replacementNode)
 }
 
 export function removeNode(node, reparentChildren = false) {
 	if (reparentChildren && node.parentNode) {
 		while (node.firstChild) {
-			node.parentNode.insertBefore(node.firstChild, node)
+			insertNodeBefore(node.firstChild, node)
 		}
 	}
 	node.remove()
 }
+
+export function swap(firstNode, secondNode, reparentChildren = false) {
+	const firstNodePrev = firstNode.previousSibling
+	const firstNodeParent = firstNode.parentNode
+	const secondNodePrev = secondNode.previousSibling
+	const secondNodeParent = secondNode.parentNode
+	if (firstNodeParent) {
+		firstNodeParent.removeChild(firstNode)
+		secondNodePrev ? secondNodePrev.after(firstNode) : secondNodeParent.prepend(firstNode)
+	}
+	if (secondNodeParent) {
+		secondNodeParent.removeChild(secondNode)
+		firstNodePrev ? firstNodePrev.after(secondNode) : firstNodeParent.prepend(secondNode)
+	}
+	if (reparentChildren) {
+		swapChildren(firstNode, secondNode)
+	}
+}
+
+export function swapChildren(nodeA, nodeB) {
+	const tempA = newFragment()
+	const tempB = newFragment()
+	transferChildren(nodeA, tempA)
+	transferChildren(nodeB, tempB)
+	nodeA.appendChild(tempB)
+	nodeB.appendChild(tempA)
+}
+
+
+export function transferChildren(sourceNode, targetNode) {
+	while (sourceNode.firstChild) {
+		targetNode.appendChild(sourceNode.firstChild)
+	}
+}
+
 
 export function removeMatchingChildren(element, match, { directDescendantsOnly = false, reparentChildren = true } = {}) {
 	const children = [...element.children]
@@ -286,7 +333,7 @@ export function wrapElement(element, wrapper) {
 	if (element.parentElement) {
 		insertNodeBefore(wrapper, element)
 	}
-	insertAsLastChild(element, wrapper)
+	insertNodeAsLastChild(element, wrapper)
 }
 
 export function hasAttribute(element, attribute) {
